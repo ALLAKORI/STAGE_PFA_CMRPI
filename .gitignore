@@ -8,4 +8,8 @@ historique_collectes/
 .env
 .env.*
 !.env.example
-
+*.aux
+*.log
+*.out
+*.toc
+rapport_jalon2.pdf

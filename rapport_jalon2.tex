@@ -1,0 +1,690 @@
+\documentclass[11pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{microtype}
+
+\geometry{top=2.2cm,bottom=2.2cm,left=2.4cm,right=2.4cm}
+\definecolor{cmrpiblue}{RGB}{20,67,107}
+\definecolor{cmrpilight}{RGB}{232,241,247}
+\definecolor{codegreen}{RGB}{20,110,70}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=cmrpiblue,
+  urlcolor=cmrpiblue,
+  pdftitle={Rapport du Jalon 2 - Détecteur d'URL de phishing},
+  pdfauthor={ALLADO Kossi Richard et ADJEVI Kodjo Marius-Ben}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Jalon 2 -- Projet de stage PFA}
+\fancyhead[R]{Détection d'URL de phishing}
+\fancyfoot[L]{ALLADO Kossi Richard -- ADJEVI Kodjo Marius-Ben}
+\fancyfoot[R]{Page \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\titleformat{\chapter}[hang]
+  {\normalfont\huge\bfseries\color{cmrpiblue}}
+  {\thechapter.}{0.7em}{}
+\titlespacing*{\chapter}{0pt}{-20pt}{18pt}
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{cmrpiblue}}
+  {\thesection}{0.7em}{}
+
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{cmrpiblue}\bfseries,
+  commentstyle=\color{codegreen},
+  stringstyle=\color{purple},
+  numbers=left,
+  numberstyle=\tiny,
+  stepnumber=1,
+  numbersep=8pt,
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{cmrpilight},
+  captionpos=b
+}
+
+\newcommand{\metric}[2]{%
+  \begin{minipage}[t]{0.22\textwidth}
+    \centering
+    \colorbox{cmrpilight}{\parbox[c][1.6cm][c]{0.92\linewidth}{%
+      \centering\Large\bfseries\color{cmrpiblue}#1\\[-1mm]
+      \normalsize\color{black}#2}}
+  \end{minipage}
+}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  {\large\bfseries Centre Marocain de Recherches Polytechnique et d'Innovation\par}
+  \vspace{0.25cm}
+  {\large Département / Service : Cybersécurité IA\par}
+  \vspace{1.3cm}
+  \rule{\textwidth}{1.2pt}
+  \vspace{0.5cm}
+
+  {\Large\bfseries PROJET DE STAGE PFA -- ÉTÉ 2026\par}
+  \vspace{0.5cm}
+  {\LARGE\bfseries\color{cmrpiblue}
+  Système de détection et d'alerte précoce\\
+  des cybermenaces ciblant les PME\par}
+
+  \vspace{0.5cm}
+  \rule{\textwidth}{1.2pt}
+  \vspace{1.3cm}
+
+  {\Large\bfseries LIVRABLE DU DEUXIÈME JALON\par}
+  \vspace{0.7cm}
+  {\LARGE\bfseries
+  Construction d'un premier détecteur\\
+  d'URL de phishing\par}
+  \vspace{0.4cm}
+  {\large Feature Engineering, automatisation des données\\
+  et régression logistique\par}
+
+  \vfill
+
+  \begin{tabularx}{\textwidth}{X X}
+    \textbf{Réalisé par :} & \textbf{Encadré par :}\\[0.25cm]
+    ALLADO Kossi Richard & Pr. Youssef Bentaleb\\
+    ADJEVI Kodjo Marius-Ben & Co-encadrante : Pr. Mehdia Ajana
+  \end{tabularx}
+
+  \vfill
+  {\large\bfseries Période du deuxième jalon\par}
+  {\large Du 1\textsuperscript{er} au 15 août 2026\par}
+  \vspace{0.7cm}
+  {\large Année universitaire 2025--2026\par}
+\end{titlepage}
+
+\pagenumbering{roman}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\chapter{Introduction}
+
+Le projet de stage PFA intitulé \og Système de détection et d'alerte précoce
+des cybermenaces ciblant les PME \fg{} vise à construire progressivement un
+prototype capable de collecter, détecter et signaler des menaces liées au
+phishing. Le premier jalon a permis de comprendre le phishing, de présenter
+les URL malveillantes et de développer un script de collecte depuis la
+plateforme publique URLhaus.
+
+Le deuxième jalon transforme ces données brutes en informations exploitables
+par un algorithme d'apprentissage automatique. L'objectif principal consiste
+à construire un premier détecteur simple, compréhensible et reproductible.
+Pour cela, nous avons préparé un jeu de données étiqueté, extrait des
+caractéristiques numériques à partir des URL, entraîné une régression
+logistique et évalué ses performances sur un ensemble de test indépendant.
+
+À la suite du retour de l'encadrant, une attention particulière a également
+été portée à deux améliorations :
+
+\begin{itemize}
+  \item enrichir les URL au moyen d'une phase de \emph{Feature Engineering} ;
+  \item automatiser la collecte, le nettoyage, la mise à jour et
+        l'historisation des données.
+\end{itemize}
+
+Ce rapport décrit la démarche, les choix réalisés, les résultats obtenus et
+les limites du premier modèle. Le code source associé est disponible dans le
+dépôt GitHub du projet :
+\url{https://github.com/ALLAKORI/STAGE_PFA_CMRPI}.
+
+\chapter{Objectifs et démarche du Jalon 2}
+
+\section{Objectifs}
+
+Les objectifs opérationnels du deuxième jalon sont les suivants :
+
+\begin{enumerate}
+  \item récupérer un jeu de données d'URL déjà étiquetées ;
+  \item transformer les URL en variables numériques pertinentes ;
+  \item séparer les données d'entraînement et de test ;
+  \item entraîner un modèle simple avec \texttt{scikit-learn} ;
+  \item mesurer les bonnes détections et les erreurs ;
+  \item sauvegarder le modèle afin de prédire de nouvelles URL ;
+  \item rendre la collecte de données plus robuste et reproductible.
+\end{enumerate}
+
+\section{Chaîne de traitement}
+
+La chaîne mise en place suit les étapes ci-dessous :
+
+\begin{center}
+\fbox{\parbox{0.9\textwidth}{
+\centering
+Collecte ou chargement des URL
+$\longrightarrow$ nettoyage
+$\longrightarrow$ extraction des caractéristiques
+$\longrightarrow$ séparation entraînement/test
+$\longrightarrow$ standardisation
+$\longrightarrow$ entraînement
+$\longrightarrow$ évaluation et sauvegarde
+}}
+\end{center}
+
+Cette organisation sépare les responsabilités entre plusieurs scripts. Le
+fichier \texttt{Download\_urls.py} gère la collecte, le fichier
+\texttt{feature\_engineering.py} transforme une URL, le fichier
+\texttt{train\_model.py} entraîne le détecteur et le fichier
+\texttt{predict.py} applique le modèle sauvegardé à une nouvelle URL.
+
+\chapter{Données utilisées}
+
+\section{Jeu de données étiqueté}
+
+L'entraînement s'appuie sur le jeu de données \emph{PhiUSIIL Phishing URL
+Dataset}. Celui-ci contient des URL légitimes et des URL de phishing,
+accompagnées d'une étiquette de classe. Après préparation et extraction des
+variables utiles, le fichier \texttt{dataset\_features.csv} contient
+235\,795 observations et 22 colonnes : 21 caractéristiques et une étiquette.
+
+\begin{table}[H]
+\centering
+\caption{Répartition des classes dans le jeu préparé}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Classe} & \textbf{Signification} & \textbf{Nombre d'URL}\\
+\midrule
+0 & Phishing & 100\,945\\
+1 & Légitime & 134\,850\\
+\midrule
+\multicolumn{2}{r}{\textbf{Total}} & \textbf{235\,795}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Les deux classes sont suffisamment représentées pour effectuer un premier
+apprentissage. La légère différence entre leurs effectifs est prise en compte
+lors de la séparation grâce à l'option \texttt{stratify=y}, qui conserve des
+proportions comparables dans les ensembles d'entraînement et de test.
+
+\section{Différence entre URLhaus et le jeu d'entraînement}
+
+URLhaus fournit des indicateurs réels et récents associés principalement à la
+distribution de logiciels malveillants. Cette source est utile pour alimenter
+et actualiser la base locale, mais elle ne fournit pas à elle seule un
+échantillon équilibré d'URL légitimes et de phishing adapté à l'apprentissage
+supervisé.
+
+Le jeu PhiUSIIL est donc utilisé pour entraîner et évaluer le premier modèle,
+tandis qu'URLhaus reste la source de Threat Intelligence destinée à la
+collecte continue. Cette distinction évite de considérer toutes les données
+comme interchangeables et clarifie le rôle de chaque source.
+
+\chapter{Extraction des caractéristiques}
+
+\section{Principe du Feature Engineering}
+
+Un modèle de régression logistique ne peut pas interpréter directement une
+chaîne de caractères telle qu'une URL. Le \emph{Feature Engineering} consiste
+à transformer cette chaîne en valeurs numériques décrivant sa structure.
+L'objectif n'est pas d'ouvrir le site, mais d'analyser uniquement l'adresse.
+
+Cette analyse statique réduit le risque lié à la manipulation d'URL
+malveillantes et permet une prédiction rapide. Cependant, elle ne renseigne
+pas sur le contenu réel de la page, son certificat, son ancienneté ou son
+comportement après redirection.
+
+\section{Caractéristiques retenues}
+
+\begin{longtable}{p{0.34\textwidth}p{0.56\textwidth}}
+\caption{Les 21 caractéristiques extraites d'une URL}\\
+\toprule
+\textbf{Caractéristique} & \textbf{Description}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Caractéristique} & \textbf{Description}\\
+\midrule
+\endhead
+\texttt{url\_length} & Longueur totale de l'URL.\\
+\texttt{domain\_length} & Longueur du nom d'hôte.\\
+\texttt{path\_length} & Longueur du chemin après le domaine.\\
+\texttt{query\_length} & Longueur de la chaîne de paramètres.\\
+\texttt{number\_of\_subdomains} & Nombre approximatif de sous-domaines.\\
+\texttt{has\_ip\_address} & Indique si une adresse IP remplace le domaine.\\
+\texttt{uses\_https} & Indique la présence du protocole HTTPS.\\
+\texttt{number\_of\_letters} & Nombre de lettres.\\
+\texttt{number\_of\_digits} & Nombre de chiffres.\\
+\texttt{number\_of\_special\_characters} & Nombre de caractères non alphanumériques.\\
+\texttt{letter\_ratio} & Proportion de lettres dans l'URL.\\
+\texttt{digit\_ratio} & Proportion de chiffres dans l'URL.\\
+\texttt{number\_of\_dots} & Nombre de points.\\
+\texttt{number\_of\_hyphens} & Nombre de tirets.\\
+\texttt{number\_of\_underscores} & Nombre de tirets bas.\\
+\texttt{number\_of\_slashes} & Nombre de barres obliques.\\
+\texttt{number\_of\_question\_marks} & Nombre de points d'interrogation.\\
+\texttt{number\_of\_equal\_signs} & Nombre de signes égal.\\
+\texttt{number\_of\_ampersands} & Nombre d'esperluettes.\\
+\texttt{number\_of\_at\_symbols} & Nombre d'arobases.\\
+\texttt{suspicious\_keyword\_count} & Nombre de mots suspects tels que
+\texttt{login}, \texttt{verify}, \texttt{account} ou \texttt{password}.\\
+\bottomrule
+\end{longtable}
+
+\section{Extrait de l'implémentation}
+
+\begin{lstlisting}[caption={Extrait de la fonction d'extraction}]
+def extract_features(url):
+    original_url = str(url).strip()
+    normalized_url = normalize_url(original_url)
+    parsed_url = urlparse(normalized_url)
+
+    hostname = parsed_url.hostname or ""
+    path = parsed_url.path or ""
+    query = parsed_url.query or ""
+
+    return {
+        "url_length": len(original_url),
+        "domain_length": len(hostname),
+        "path_length": len(path),
+        "query_length": len(query),
+        "number_of_subdomains": count_subdomains(hostname),
+        "has_ip_address": contains_ip_address(hostname),
+        "uses_https": int(
+            original_url.lower().startswith("https://")
+        ),
+        # autres caracteristiques...
+    }
+\end{lstlisting}
+
+La fonction normalise d'abord l'adresse en ajoutant un protocole lorsqu'il est
+absent. La fonction \texttt{urlparse()} sépare ensuite le domaine, le chemin et
+les paramètres. L'adresse IP est vérifiée avec le module standard
+\texttt{ipaddress}, sans effectuer de connexion vers l'URL.
+
+\chapter{Automatisation de la collecte}
+
+\section{Améliorations apportées}
+
+Le premier script téléchargeait les données URLhaus et remplaçait le fichier
+local. Pour le deuxième jalon, le processus a été enrichi afin de :
+
+\begin{itemize}
+  \item vérifier les erreurs HTTP et limiter l'attente à 30 secondes ;
+  \item nettoyer les commentaires présents dans le CSV d'URLhaus ;
+  \item normaliser les URL et supprimer les doublons ;
+  \item comparer les nouvelles données à la base locale ;
+  \item ajouter uniquement les URL encore inconnues ;
+  \item conserver un historique daté des nouvelles collectes ;
+  \item calculer un hash SHA-256 du contenu téléchargé ;
+  \item éviter un retraitement lorsque la source n'a pas changé ;
+  \item mémoriser la date de la dernière mise à jour.
+\end{itemize}
+
+\section{Détection d'un changement}
+
+\begin{lstlisting}[caption={Vérification du contenu téléchargé}]
+contenu_brut = response.text
+
+hash_actuel = hashlib.sha256(
+    contenu_brut.encode("utf-8")
+).hexdigest()
+
+etat = charger_etat()
+
+if etat.get("hash") == hash_actuel:
+    print("Aucun changement detecte.")
+    return
+\end{lstlisting}
+
+Le hash représente une empreinte du fichier. Si l'empreinte actuelle est
+identique à celle de la collecte précédente, le programme s'arrête sans
+réécrire inutilement les données.
+
+\section{Mise à jour et historique}
+
+Les URL déjà présentes sont réunies dans un ensemble, puis les nouvelles
+lignes sont sélectionnées par différence. Après fusion, les doublons sont
+supprimés. Un fichier daté est créé dans
+\texttt{historique\_collectes} afin de conserver uniquement les ajouts de
+chaque exécution.
+
+Cette organisation améliore la robustesse, la maintenabilité et la
+reproductibilité demandées par l'encadrant. Le script peut ensuite être lancé
+périodiquement à l'aide du Planificateur de tâches Windows ou d'une tâche
+\texttt{cron} sous Linux. La programmation automatique par le système
+d'exploitation sera intégrée et documentée lors de l'assemblage final.
+
+\chapter{Construction du modèle}
+
+\section{Choix de la régression logistique}
+
+La régression logistique est un algorithme supervisé simple destiné à la
+classification. Malgré son nom, elle permet ici de choisir entre deux classes :
+phishing ou légitime. Elle calcule une probabilité à partir d'une combinaison
+pondérée des caractéristiques.
+
+Ce modèle a été retenu parce qu'il est rapide, accessible, adapté à une
+première classification binaire et plus facile à expliquer qu'un modèle
+complexe. Il fournit également une méthode \texttt{predict\_proba()} utile
+pour afficher un niveau de confiance.
+
+\section{Séparation entraînement/test}
+
+Le jeu de données est divisé en deux parties :
+
+\begin{itemize}
+  \item 80\,\% des observations servent à entraîner le modèle ;
+  \item 20\,\% servent uniquement à mesurer ses performances.
+\end{itemize}
+
+\begin{lstlisting}[caption={Séparation stratifiée des données}]
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y,
+)
+\end{lstlisting}
+
+Le paramètre \texttt{random\_state=42} rend la séparation reproductible.
+L'ensemble de test contient 47\,159 URL : 20\,189 de phishing et 26\,970
+légitimes. Ces URL ne sont pas utilisées pendant l'apprentissage.
+
+\section{Standardisation}
+
+Les variables n'ont pas toutes la même échelle. Par exemple, une longueur
+d'URL peut atteindre plusieurs dizaines ou centaines, alors que
+\texttt{uses\_https} vaut uniquement 0 ou 1. La standardisation centre et
+réduit les variables pour faciliter l'optimisation du modèle.
+
+\begin{lstlisting}[caption={Standardisation sans fuite de données}]
+scaler = StandardScaler()
+
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+\end{lstlisting}
+
+Le scaler est ajusté uniquement sur les données d'entraînement. L'ensemble de
+test est transformé avec les paramètres déjà appris, ce qui évite de transmettre
+au modèle des informations provenant du test.
+
+\section{Entraînement et sauvegarde}
+
+\begin{lstlisting}[caption={Entraînement de la régression logistique}]
+model = LogisticRegression(
+    max_iter=1000,
+    random_state=42,
+)
+
+model.fit(X_train_scaled, y_train)
+
+joblib.dump(model, "logistic_regression_model.pkl")
+joblib.dump(scaler, "scaler.pkl")
+\end{lstlisting}
+
+Le modèle et le scaler sont enregistrés avec \texttt{joblib}. Une nouvelle
+prédiction peut ainsi être réalisée sans recommencer l'entraînement.
+
+\chapter{Évaluation et résultats}
+
+\section{Métriques utilisées}
+
+L'\emph{accuracy} mesure la proportion totale de prédictions correctes. La
+précision indique, parmi les URL annoncées légitimes, la proportion réellement
+légitime selon les étiquettes du jeu. Le rappel indique la proportion d'URL
+légitimes retrouvées. Le F1-score fournit un équilibre entre précision et
+rappel.
+
+Dans notre codage, la classe 0 correspond au phishing et la classe 1 à une URL
+légitime. Les métriques globales affichées par le script avec les paramètres
+par défaut de \texttt{scikit-learn} décrivent donc principalement la classe 1.
+Le rapport de classification détaille ensuite les résultats pour chaque classe.
+
+\section{Résultats obtenus}
+
+\begin{center}
+\metric{99,32\,\%}{Accuracy}\hfill
+\metric{98,88\,\%}{Précision}\hfill
+\metric{99,93\,\%}{Rappel}\hfill
+\metric{99,41\,\%}{F1-score}
+\end{center}
+
+\vspace{0.6cm}
+
+\begin{table}[H]
+\centering
+\caption{Rapport de classification sur l'ensemble de test}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Classe} & \textbf{Précision} & \textbf{Rappel} &
+\textbf{F1-score} & \textbf{Effectif}\\
+\midrule
+Phishing (0) & 1,00 & 0,98 & 0,99 & 20\,189\\
+Légitime (1) & 0,99 & 1,00 & 0,99 & 26\,970\\
+\midrule
+Accuracy & \multicolumn{3}{c}{0,99} & 47\,159\\
+Moyenne macro & 0,99 & 0,99 & 0,99 & 47\,159\\
+Moyenne pondérée & 0,99 & 0,99 & 0,99 & 47\,159\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Matrice de confusion}
+
+\begin{table}[H]
+\centering
+\caption{Matrice de confusion}
+\begin{tabular}{llrr}
+\toprule
+& & \multicolumn{2}{c}{\textbf{Classe prédite}}\\
+& & Phishing (0) & Légitime (1)\\
+\midrule
+\multirow{2}{*}{\textbf{Classe réelle}} & Phishing (0) & 19\,885 & 304\\
+& Légitime (1) & 18 & 26\,952\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Les lignes représentent les classes réelles et les colonnes les
+classes prédites.
+
+Sur 47\,159 URL de test :
+
+\begin{itemize}
+  \item 19\,885 URL de phishing sont correctement détectées ;
+  \item 26\,952 URL légitimes sont correctement reconnues ;
+  \item 304 URL de phishing sont classées à tort comme légitimes ;
+  \item 18 URL légitimes sont classées à tort comme phishing.
+\end{itemize}
+
+L'erreur la plus importante pour la sécurité correspond aux 304 URL de
+phishing classées comme légitimes, car elles pourraient ne pas déclencher
+d'alerte. Le taux global est élevé, mais le prototype ne doit donc pas être
+considéré comme une garantie absolue.
+
+\section{Interprétation}
+
+Les résultats montrent que les caractéristiques lexicales et structurelles
+permettent de distinguer efficacement les classes dans ce jeu de données.
+Cependant, une performance élevée sur un ensemble provenant de la même source
+ne prouve pas que le modèle conservera exactement la même efficacité sur des
+URL réelles, nouvelles ou issues d'une autre distribution.
+
+Il sera donc nécessaire de tester le détecteur sur des données plus récentes,
+de vérifier l'absence de doublons entre les ensembles et de surveiller
+l'évolution des performances dans le temps.
+
+\chapter{Prédiction d'une nouvelle URL}
+
+Le script \texttt{predict.py} charge le modèle et le scaler enregistrés. Il
+demande une URL à l'utilisateur, extrait les 21 caractéristiques dans le même
+ordre que pendant l'entraînement, applique la standardisation, puis affiche la
+classe et la probabilité associée.
+
+\begin{lstlisting}[caption={Principe de la prédiction interactive}]
+url = input("Entrez une URL a analyser : ").strip()
+
+features = extract_features(url)
+features_df = pd.DataFrame([features])
+features_scaled = scaler.transform(features_df)
+
+prediction = model.predict(features_scaled)[0]
+probabilities = model.predict_proba(features_scaled)[0]
+\end{lstlisting}
+
+Si la prédiction vaut 1, le résultat affiché est \og URL légitime \fg. Si elle
+vaut 0, le résultat est \og URL phishing \fg. La confiance affichée correspond
+à la probabilité calculée pour la classe prédite.
+
+Cette utilisation reste une aide à la décision. L'utilisateur ne doit pas
+ouvrir une URL suspecte pour confirmer le résultat. Une adresse classée
+légitime peut être malveillante, notamment si elle utilise une technique qui
+n'est pas représentée dans le jeu d'entraînement.
+
+\chapter{Organisation et reproductibilité}
+
+\section{Fichiers principaux}
+
+\begin{table}[H]
+\centering
+\caption{Organisation du dépôt}
+\begin{tabularx}{\textwidth}{p{0.34\textwidth}X}
+\toprule
+\textbf{Fichier} & \textbf{Rôle}\\
+\midrule
+\texttt{Download\_urls.py} & Collecte et mise à jour des données URLhaus.\\
+\texttt{feature\_engineering.py} & Extraction des 21 caractéristiques.\\
+\texttt{jalon2.ipynb} & Exploration et préparation du jeu de données.\\
+\texttt{dataset\_features.csv} & Données numériques préparées.\\
+\texttt{train\_model.py} & Entraînement, évaluation et sauvegarde.\\
+\texttt{predict.py} & Prédiction interactive d'une URL.\\
+\texttt{logistic\_regression\_model.pkl} & Modèle entraîné.\\
+\texttt{scaler.pkl} & Paramètres de standardisation.\\
+\texttt{requirements.txt} & Dépendances Python.\\
+\texttt{README.md} & Installation et utilisation du projet.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Reproduction de l'expérience}
+
+\begin{lstlisting}[language={},caption={Installation et exécution sous Windows}]
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python train_model.py
+python predict.py
+\end{lstlisting}
+
+Le dépôt Git permet de conserver l'historique des modifications et de
+partager une version commune entre les deux stagiaires. L'environnement
+virtuel et les caches ne sont pas publiés. Les dépendances nécessaires sont
+déclarées dans \texttt{requirements.txt}.
+
+\chapter{Limites et perspectives}
+
+\section{Limites actuelles}
+
+\begin{itemize}
+  \item Le modèle analyse la forme de l'URL, mais pas le contenu de la page.
+  \item HTTPS ne garantit pas qu'un site est légitime.
+  \item Les mots-clés suspects peuvent aussi apparaître dans une URL légitime.
+  \item Les performances peuvent diminuer sur des données plus récentes.
+  \item La confiance du modèle n'est pas une preuve de sécurité.
+  \item URLhaus concerne plus largement les URL diffusant des logiciels
+        malveillants et ne représente pas uniquement le phishing.
+  \item Le prototype ne doit pas ouvrir automatiquement les URL collectées.
+\end{itemize}
+
+\section{Préparation du Jalon 3}
+
+Le troisième jalon assemblera les éléments dans un prototype complet. Les
+travaux prévus sont :
+
+\begin{enumerate}
+  \item créer un tableau de bord Streamlit ;
+  \item afficher les informations et le résultat de détection ;
+  \item envoyer une alerte par e-mail lorsqu'une menace est détectée ;
+  \item rédiger deux à trois fiches réflexes destinées aux PME ;
+  \item tester la chaîne de bout en bout ;
+  \item préparer la documentation et la présentation finale.
+\end{enumerate}
+
+Une attention particulière sera portée à la protection des identifiants de
+messagerie. Ils ne devront pas être enregistrés dans le code ni publiés sur
+GitHub. Ils seront chargés à partir de variables d'environnement ou d'un
+fichier local exclu par \texttt{.gitignore}.
+
+\chapter{Conclusion}
+
+Ce deuxième jalon a permis de construire un premier détecteur d'URL de
+phishing fondé sur une régression logistique. Les URL ont été transformées en
+21 caractéristiques numériques décrivant leur longueur, leur domaine, leurs
+caractères et certains motifs suspects.
+
+Le jeu de 235\,795 observations a été séparé en ensembles d'entraînement et
+de test de manière stratifiée. Sur les 47\,159 observations réservées au test,
+le modèle obtient une accuracy de 99,32\,\% et un F1-score de 99,41\,\%.
+L'analyse de la matrice de confusion montre 322 erreurs, dont 304 URL de
+phishing classées comme légitimes.
+
+Le processus de collecte URLhaus a également été amélioré avec la suppression
+des doublons, la détection des changements, la mise à jour incrémentale et la
+conservation d'un historique. Ces améliorations répondent aux recommandations
+formulées après le premier jalon.
+
+Le modèle constitue une base fonctionnelle pour le prototype, mais il conserve
+des limites et ne doit pas être utilisé comme unique preuve de sécurité. Le
+prochain jalon intégrera ce détecteur dans une interface Streamlit avec un
+mécanisme d'alerte et des fiches réflexes destinées aux PME.
+
+\chapter*{Références}
+\addcontentsline{toc}{chapter}{Références}
+
+\begin{itemize}
+  \item URLhaus, abuse.ch : \url{https://urlhaus.abuse.ch}
+  \item Documentation scikit-learn :
+        \url{https://scikit-learn.org/stable/}
+  \item Documentation pandas : \url{https://pandas.pydata.org/docs/}
+  \item Documentation Python : \url{https://docs.python.org/3/}
+  \item PhiUSIIL Phishing URL Dataset, UCI Machine Learning Repository :
+        \url{https://archive.ics.uci.edu/dataset/967/phiusiil+phishing+url+dataset}
+  \item Dépôt GitHub du projet :
+        \url{https://github.com/ALLAKORI/STAGE_PFA_CMRPI}
+\end{itemize}
+
+\appendix
+\chapter{Valeurs détaillées de l'exécution}
+
+\begin{verbatim}
+Accuracy : 0.993172035030429
+Precision : 0.9888464925154095
+Recall : 0.9993325917686318
+F1-score : 0.9940618891306753
+
+Matrice de confusion :
+[[19885   304]
+ [   18 26952]]
+\end{verbatim}
+
+\end{document}

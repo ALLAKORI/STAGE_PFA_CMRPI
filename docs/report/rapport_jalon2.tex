@@ -202,7 +202,7 @@ fichier \texttt{Download\_urls.py} gère la collecte, le fichier
 L'entraînement s'appuie sur le jeu de données \emph{PhiUSIIL Phishing URL
 Dataset}. Celui-ci contient des URL légitimes et des URL de phishing,
 accompagnées d'une étiquette de classe. Après préparation et extraction des
-variables utiles, le fichier \texttt{dataset\_features.csv} contient
+variables utiles, le fichier \texttt{data/processed/dataset\_features.csv} contient
 235\,795 observations et 22 colonnes : 21 caractéristiques et une étiquette.
 
 \begin{table}[H]
@@ -364,7 +364,7 @@ réécrire inutilement les données.
 Les URL déjà présentes sont réunies dans un ensemble, puis les nouvelles
 lignes sont sélectionnées par différence. Après fusion, les doublons sont
 supprimés. Un fichier daté est créé dans
-\texttt{historique\_collectes} afin de conserver uniquement les ajouts de
+\texttt{data/collected/urlhaus/history} afin de conserver uniquement les ajouts de
 chaque exécution.
 
 Cette organisation améliore la robustesse, la maintenabilité et la
@@ -438,8 +438,8 @@ model = LogisticRegression(
 
 model.fit(X_train_scaled, y_train)
 
-joblib.dump(model, "logistic_regression_model.pkl")
-joblib.dump(scaler, "scaler.pkl")
+joblib.dump(model, "models/logistic_regression_model.pkl")
+joblib.dump(scaler, "models/scaler.pkl")
 \end{lstlisting}
 
 Le modèle et le scaler sont enregistrés avec \texttt{joblib}. Une nouvelle
@@ -450,23 +450,23 @@ prédiction peut ainsi être réalisée sans recommencer l'entraînement.
 \section{Métriques utilisées}
 
 L'\emph{accuracy} mesure la proportion totale de prédictions correctes. La
-précision indique, parmi les URL annoncées légitimes, la proportion réellement
-légitime selon les étiquettes du jeu. Le rappel indique la proportion d'URL
-légitimes retrouvées. Le F1-score fournit un équilibre entre précision et
-rappel.
+précision indique, parmi les URL annoncées comme phishing, la proportion
+réellement associée au phishing. Le rappel indique la proportion d'URL de
+phishing effectivement détectées. Le F1-score fournit un équilibre entre
+précision et rappel.
 
 Dans notre codage, la classe 0 correspond au phishing et la classe 1 à une URL
-légitime. Les métriques globales affichées par le script avec les paramètres
-par défaut de \texttt{scikit-learn} décrivent donc principalement la classe 1.
-Le rapport de classification détaille ensuite les résultats pour chaque classe.
+légitime. Le script évalue explicitement la classe 0 pour les métriques
+principales, car la détection du phishing est l'objectif prioritaire. Le rapport
+de classification détaille ensuite les résultats pour les deux classes.
 
 \section{Résultats obtenus}
 
 \begin{center}
 \metric{99,32\,\%}{Accuracy}\hfill
-\metric{98,88\,\%}{Précision}\hfill
-\metric{99,93\,\%}{Rappel}\hfill
-\metric{99,41\,\%}{F1-score}
+\metric{99,91\,\%}{Précision phishing}\hfill
+\metric{98,49\,\%}{Rappel phishing}\hfill
+\metric{99,20\,\%}{F1-score phishing}
 \end{center}
 
 \vspace{0.6cm}
@@ -563,28 +563,55 @@ n'est pas représentée dans le jeu d'entraînement.
 
 \chapter{Organisation et reproductibilité}
 
-\section{Fichiers principaux}
+\subsection{Organisation du dépôt}
 
-\begin{table}[H]
-\centering
-\caption{Organisation du dépôt}
-\begin{tabularx}{\textwidth}{p{0.34\textwidth}X}
-\toprule
-\textbf{Fichier} & \textbf{Rôle}\\
-\midrule
-\texttt{Download\_urls.py} & Collecte et mise à jour des données URLhaus.\\
-\texttt{feature\_engineering.py} & Extraction des 21 caractéristiques.\\
-\texttt{jalon2.ipynb} & Exploration et préparation du jeu de données.\\
-\texttt{dataset\_features.csv} & Données numériques préparées.\\
-\texttt{train\_model.py} & Entraînement, évaluation et sauvegarde.\\
-\texttt{predict.py} & Prédiction interactive d'une URL.\\
-\texttt{logistic\_regression\_model.pkl} & Modèle entraîné.\\
-\texttt{scaler.pkl} & Paramètres de standardisation.\\
-\texttt{requirements.txt} & Dépendances Python.\\
-\texttt{README.md} & Installation et utilisation du projet.\\
-\bottomrule
-\end{tabularx}
-\end{table}
+Le dépôt du projet est organisé de manière à séparer les différentes étapes de la chaîne de traitement, depuis la collecte des données jusqu'à l'entraînement du modèle et son utilisation. Cette organisation facilite la maintenance du projet ainsi que la reproductibilité des expériences.
+
+\begin{lstlisting}[language={},basicstyle=\ttfamily\small]
+project/
+|--- data/
+|   |--- raw/
+|   |   `--- PhiUSIIL_Phishing_URL_Dataset.csv
+|   |--- processed/
+|   |   `--- dataset_features.csv
+|   `--- collected/
+|       `--- urlhaus/
+|           |--- current_urls.csv
+|           `--- history/
+|
+|--- docs/
+|   |--- evaluation.md
+|   `--- report/
+|
+|--- models/
+|   |--- logistic_regression_model.pkl
+|   `--- scaler.pkl
+|
+|--- Download_urls.py
+|--- feature_engineering.py
+|--- train_model.py
+|--- predict.py
+|--- prepare_phishing_url_features.ipynb
+|--- requirements.txt
+`--- README.md
+\end{lstlisting}
+
+Les principaux éléments du dépôt sont décrits ci-dessous :
+
+\begin{itemize}
+    \item \textbf{data/raw/} : contient le jeu de données d'origine utilisé pour l'entraînement des modèles.
+    \item \textbf{data/processed/} : regroupe les jeux de données après extraction des caractéristiques.
+    \item \textbf{data/collected/urlhaus/} : stocke les URL téléchargées depuis URLhaus ainsi que l'historique des différentes collectes.
+    \item \textbf{docs/} : rassemble la documentation technique, les résultats d'évaluation et les sources du rapport.
+    \item \textbf{models/} : contient les modèles entraînés ainsi que les objets nécessaires à la phase de prédiction (standardisation, sérialisation).
+    \item \textbf{Download\_urls.py} : automatise le téléchargement et la mise à jour des URL provenant d'URLhaus.
+    \item \textbf{feature\_engineering.py} : extrait les 21 caractéristiques utilisées par les modèles de classification.
+    \item \textbf{train\_model.py} : réalise l'entraînement, l'évaluation et la sauvegarde des modèles.
+    \item \textbf{predict.py} : permet d'effectuer la prédiction du caractère malveillant d'une URL à partir d'un modèle entraîné.
+    \item \textbf{prepare\_phishing\_url\_features.ipynb} : notebook utilisé pour l'exploration des données et l'extraction des caractéristiques.
+    \item \textbf{requirements.txt} : liste des dépendances Python nécessaires à l'exécution du projet.
+    \item \textbf{README.md} : présente les instructions d'installation, d'utilisation et l'organisation générale du dépôt.
+\end{itemize}
 
 \section{Reproduction de l'expérience}
 

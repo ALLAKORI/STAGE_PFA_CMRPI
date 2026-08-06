@@ -3,8 +3,8 @@ venv/
 __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
-.urlhaus_state.json
-historique_collectes/
+data/collected/urlhaus/.urlhaus_state.json
+data/collected/urlhaus/history/*.csv
 .env
 .env.*
 !.env.example
@@ -12,4 +12,3 @@ historique_collectes/
 *.log
 *.out
 *.toc
-rapport_jalon2.pdf

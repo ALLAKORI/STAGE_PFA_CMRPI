@@ -54,16 +54,52 @@ y_pred = model.predict(X_test_scaled)
 
 
 # 7. Afficher les résultats
+# Dans PhiUSIIL : 0 = phishing et 1 = légitime.
+# Le phishing est la classe prioritaire à détecter.
+PHISHING_LABEL = 0
+
 print("Accuracy :", accuracy_score(y_test, y_pred))
-print("Precision :", precision_score(y_test, y_pred))
-print("Recall :", recall_score(y_test, y_pred))
-print("F1-score :", f1_score(y_test, y_pred))
+print(
+    "Precision phishing :",
+    precision_score(
+        y_test,
+        y_pred,
+        pos_label=PHISHING_LABEL,
+        zero_division=0,
+    ),
+)
+print(
+    "Recall phishing :",
+    recall_score(
+        y_test,
+        y_pred,
+        pos_label=PHISHING_LABEL,
+        zero_division=0,
+    ),
+)
+print(
+    "F1-score phishing :",
+    f1_score(
+        y_test,
+        y_pred,
+        pos_label=PHISHING_LABEL,
+        zero_division=0,
+    ),
+)
 
 print("\nMatrice de confusion :")
-print(confusion_matrix(y_test, y_pred))
+print(confusion_matrix(y_test, y_pred, labels=[0, 1]))
 
 print("\nRapport de classification :")
-print(classification_report(y_test, y_pred))
+print(
+    classification_report(
+        y_test,
+        y_pred,
+        labels=[0, 1],
+        target_names=["phishing", "legitimate"],
+        zero_division=0,
+    )
+)
 
 
 # 8. Sauvegarder le modèle et le scaler

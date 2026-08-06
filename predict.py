@@ -1,12 +1,15 @@
 import joblib
 import pandas as pd
+from pathlib import Path
 
 from feature_engineering import extract_features
 
 
 # Charger le modèle et le scaler
-model = joblib.load("logistic_regression_model.pkl")
-scaler = joblib.load("scaler.pkl")
+MODELS_DIR = Path("models")
+
+model = joblib.load(MODELS_DIR / "logistic_regression_model.pkl")
+scaler = joblib.load(MODELS_DIR / "scaler.pkl")
 
 
 # Demander une URL

@@ -1,5 +1,6 @@
 import joblib
 import pandas as pd
+from pathlib import Path
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -15,7 +16,10 @@ from sklearn.preprocessing import StandardScaler
 
 
 # 1. Charger le dataset contenant les features
-data = pd.read_csv("dataset_features.csv")
+DATASET_PATH = Path("data/processed/dataset_features.csv")
+MODELS_DIR = Path("models")
+
+data = pd.read_csv(DATASET_PATH)
 
 
 # 2. Séparer les caractéristiques et le label
@@ -103,11 +107,16 @@ print(
 
 
 # 8. Sauvegarder le modèle et le scaler
-joblib.dump(model, "logistic_regression_model.pkl")
-joblib.dump(scaler, "scaler.pkl")
+MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-print("\nModèle sauvegardé dans logistic_regression_model.pkl")
-print("Scaler sauvegardé dans scaler.pkl")
+model_path = MODELS_DIR / "logistic_regression_model.pkl"
+scaler_path = MODELS_DIR / "scaler.pkl"
+
+joblib.dump(model, model_path)
+joblib.dump(scaler, scaler_path)
+
+print(f"\nModèle sauvegardé dans {model_path}")
+print(f"Scaler sauvegardé dans {scaler_path}")
 
 from sklearn.metrics import ConfusionMatrixDisplay
 import matplotlib.pyplot as plt

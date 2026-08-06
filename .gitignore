@@ -1,0 +1,11 @@
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.urlhaus_state.json
+historique_collectes/
+.env
+.env.*
+!.env.example
+

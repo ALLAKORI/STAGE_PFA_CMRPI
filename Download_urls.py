@@ -4,6 +4,7 @@ import json
 import os
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
 import requests
@@ -11,9 +12,10 @@ import requests
 
 URL_SOURCE = "https://urlhaus.abuse.ch/downloads/csv_recent/"
 
-FICHIER_SORTIE = "urls_malveillantes.csv"
-FICHIER_ETAT = ".urlhaus_state.json"
-DOSSIER_HISTORIQUE = "historique_collectes"
+DOSSIER_URLHAUS = Path("data/collected/urlhaus")
+FICHIER_SORTIE = DOSSIER_URLHAUS / "current_urls.csv"
+FICHIER_ETAT = DOSSIER_URLHAUS / ".urlhaus_state.json"
+DOSSIER_HISTORIQUE = DOSSIER_URLHAUS / "history"
 
 
 COLONNES = [
@@ -56,6 +58,8 @@ def sauvegarder_etat(etat):
     """
     Sauvegarde le hash et la date de la dernière mise à jour.
     """
+    FICHIER_ETAT.parent.mkdir(parents=True, exist_ok=True)
+
     with open(FICHIER_ETAT, "w", encoding="utf-8") as fichier:
         json.dump(etat, fichier, indent=2)
 
@@ -81,15 +85,14 @@ def sauvegarder_historique(nouvelles_urls):
     if nouvelles_urls.empty:
         return None
 
-    os.makedirs(DOSSIER_HISTORIQUE, exist_ok=True)
+    DOSSIER_HISTORIQUE.mkdir(parents=True, exist_ok=True)
 
     date_collecte = datetime.now(timezone.utc).strftime(
         "%Y%m%d_%H%M%S"
     )
 
-    fichier_historique = os.path.join(
-        DOSSIER_HISTORIQUE,
-        f"collecte_urlhaus_{date_collecte}.csv",
+    fichier_historique = DOSSIER_HISTORIQUE / (
+        f"collecte_urlhaus_{date_collecte}.csv"
     )
 
     nouvelles_urls.to_csv(

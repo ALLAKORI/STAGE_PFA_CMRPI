@@ -12,3 +12,7 @@ data/collected/urlhaus/history/*.csv
 *.log
 *.out
 *.toc
+
+# Copies locales préparées pour l'envoi par courriel
+/Livrable_Jalon2/
+/rapport_jalon2.pdf

@@ -1,6 +1,7 @@
 joblib
 matplotlib
 pandas
+python-dotenv
 requests
 scikit-learn
-
+streamlit

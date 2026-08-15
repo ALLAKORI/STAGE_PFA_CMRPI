@@ -5,6 +5,8 @@ __pycache__/
 .ipynb_checkpoints/
 data/collected/urlhaus/.urlhaus_state.json
 data/collected/urlhaus/history/*.csv
+data/threats.db
+data/threats.db-*
 .env
 .env.*
 !.env.example

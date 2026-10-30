@@ -12,12 +12,39 @@ import alert_service
 import database
 import detection_service
 from alert_service import AlertConfig
+from feature_engineering import extract_features
 
 
-class DetectionTests(unittest.TestCase):
+class _FakeScaler:
+    feature_names_in_ = tuple(extract_features("https://example.com").keys())
+
+    def transform(self, frame):
+        return frame
+
+
+class _FakeModel:
+    classes_ = [0, 1]
+
+    def predict(self, frame):
+        return [1]
+
+    def predict_proba(self, frame):
+        return [[0.05, 0.95]]
+
+
+class _UsesLocalTestResources:
     def setUp(self):
         detection_service.reset_resource_cache()
+        self.ml_patch = patch.object(
+            detection_service,
+            "_load_ml_resources",
+            return_value=(_FakeModel(), _FakeScaler()),
+        )
+        self.ml_patch.start()
+        self.addCleanup(self.ml_patch.stop)
 
+
+class DetectionTests(_UsesLocalTestResources, unittest.TestCase):
     def test_empty_input(self):
         with self.assertRaises(ValueError):
             detection_service.analyze_url("")
@@ -55,8 +82,11 @@ class DetectionTests(unittest.TestCase):
         self.assertFalse(absent["urlhaus_match"])
 
     def test_missing_model(self):
-        detection_service.reset_resource_cache()
-        with patch.object(detection_service, "MODEL_PATH", Path("missing-model.pkl")):
+        with patch.object(
+            detection_service,
+            "_load_ml_resources",
+            side_effect=FileNotFoundError("local model artifacts are missing"),
+        ):
             with self.assertRaises(FileNotFoundError):
                 detection_service.analyze_url("https://example.com")
 
@@ -72,7 +102,7 @@ class DetectionTests(unittest.TestCase):
         self.assertEqual(len(results), 2)
 
 
-class DatabaseTests(unittest.TestCase):
+class DatabaseTests(_UsesLocalTestResources, unittest.TestCase):
     def test_sqlite_round_trip(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "test.db"
@@ -86,7 +116,7 @@ class DatabaseTests(unittest.TestCase):
             self.assertEqual(stats["total"], 1)
 
 
-class AlertTests(unittest.TestCase):
+class AlertTests(_UsesLocalTestResources, unittest.TestCase):
     def config(self, enabled=True, host="smtp.invalid"):
         return AlertConfig(
             enabled=enabled,
